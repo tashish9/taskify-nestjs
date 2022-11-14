@@ -23,8 +23,6 @@ export class TeamsService {
       const users = await this.usersRepository.find();
 
       teams.forEach((el) => {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
         el.teamMembers = el.teamMembers.map((userId) => {
           return users.find((user) => {
             return userId.toString() === user._id.toString();

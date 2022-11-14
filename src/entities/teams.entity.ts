@@ -14,7 +14,7 @@ export class Team {
   description!: string;
 
   @Column('array', { default: [] })
-  teamMembers: ObjectID[];
+  teamMembers: ObjectID[] | User[];
 
   @Column('array', { default: [] })
   tasks: Task[] = [];
