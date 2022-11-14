@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
+import { AppController } from '../controllers/app.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AppService } from './app.service';
+import { AppService } from '../services/app.service';
 import CONSTANTS from 'config/constants';
 // import { AuthModule } from '../auth/auth.module';
-import { Team } from '../../entities/teams.entity';
-import { TeamsModule } from '../teams/teams.module';
-import { UsersModule } from '../users/users.module';
+import { Team } from '../entities/teams.entity';
+import { TeamsModule } from './teams.module';
+import { UsersModule } from './users.module';
 import { User } from 'src/entities/user.entity';
 
 @Module({

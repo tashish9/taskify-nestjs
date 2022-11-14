@@ -6,9 +6,9 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { TeamsService } from './teams.service';
+import { TeamsService } from '../services/teams.service';
 import { Request } from 'express';
-import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { AuthGuard } from 'src/guards/auth.guard';
 import { Team } from 'src/entities/teams.entity';
 
 @Controller('api/teams')

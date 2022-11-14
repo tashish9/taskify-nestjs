@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { TeamsController } from './teams.controller';
-import { TeamsService } from './teams.service';
+import { TeamsController } from '../controllers/teams.controller';
+import { TeamsService } from '../services/teams.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Team } from '../../entities/teams.entity';
+import { Team } from '../entities/teams.entity';
 import { User } from 'src/entities/user.entity';
 
 @Module({

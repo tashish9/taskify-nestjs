@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Team } from '../../entities/teams.entity';
+import { Team } from '../entities/teams.entity';
 import { MongoRepository } from 'typeorm';
 import { z } from 'zod';
 import { Task } from 'src/entities/task';
