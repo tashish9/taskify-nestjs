@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-// import { AuthModule } from 'src/modules/auth/auth.module';
-// import { AuthService } from 'src/modules/auth/auth.service';
 import { TeamsController } from './teams.controller';
 import { TeamsService } from './teams.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Team } from './teams.entity';
+import { Team } from '../../entities/teams.entity';
+import { User } from 'src/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Team])],
+  imports: [TypeOrmModule.forFeature([Team, User])],
   controllers: [TeamsController],
   providers: [TeamsService],
 })

@@ -1,22 +1,38 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Team } from './teams.entity';
+import { Team } from '../../entities/teams.entity';
 import { MongoRepository } from 'typeorm';
 import { z } from 'zod';
-import { Task } from 'db/task';
+import { Task } from 'src/entities/task';
 import { ObjectID } from 'mongodb';
+import { User } from 'src/entities/user.entity';
 
 @Injectable()
 export class TeamsService {
   constructor(
     @InjectRepository(Team)
     private readonly teamsRepository: MongoRepository<Team>,
+    @InjectRepository(User)
+    private readonly usersRepository: MongoRepository<User>,
   ) {}
 
   async findAllTeams(): Promise<Team[]> {
     try {
-      const data = await this.teamsRepository.find();
-      return data;
+      const teams = await this.teamsRepository.find();
+
+      const users = await this.usersRepository.find();
+
+      teams.forEach((el) => {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        el.teamMembers = el.teamMembers.map((userId) => {
+          return users.find((user) => {
+            return userId.toString() === user._id.toString();
+          });
+        });
+      });
+
+      return teams;
     } catch (error: any) {
       console.error(error);
       throw error;
@@ -36,7 +52,9 @@ export class TeamsService {
 
       team.title = data.title;
       team.description = data.description;
-      team.teamMembers = data.teamMembers;
+      team.teamMembers = data.teamMembers.map((el: string) => {
+        return new ObjectID(el);
+      });
 
       return this.teamsRepository.save(team);
     } catch (error: any) {
@@ -52,12 +70,31 @@ export class TeamsService {
   async addTask(teamId: string, taskData: any): Promise<Team> {
     const task = new Task();
 
-    // const AddTaskSchema = z.object({
-    //   assignee: z.string().min(1),
-    //   description: z.string().min(1),
-    //   name: z.string().min(1),
-    //   dueDate: z.string().optional(),
-    // });
+    // const dateSchema = z.preprocess(
+    //   (arg) => {
+    //     console.log(arg);
+
+    //     if (typeof arg == 'string' || arg instanceof Date) return new Date(arg);
+    //   },
+    //   z.date({
+    //     required_error: 'Please select a date and time',
+    //     invalid_type_error: "That's not a date!",
+    //   }),
+    // );
+
+    // type DateSchema = z.infer<typeof dateSchema>;
+
+    const AddTaskSchema = z.object({
+      assignee: z.string().min(1),
+      description: z.string().min(1),
+      name: z.string().min(1),
+      properties: z.string().min(1),
+      status: z.string().min(1),
+      // dueDate: dateSchema,
+      dueDate: z.date(),
+    });
+
+    AddTaskSchema.parse(taskData);
 
     task.assignee = taskData.assignee;
     task.description = taskData.description;

@@ -4,8 +4,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppService } from './app.service';
 import CONSTANTS from 'config/constants';
 // import { AuthModule } from '../auth/auth.module';
-import { Team } from '../teams/teams.entity';
+import { Team } from '../../entities/teams.entity';
 import { TeamsModule } from '../teams/teams.module';
+import { UsersModule } from '../users/users.module';
+import { User } from 'src/entities/user.entity';
 
 @Module({
   imports: [
@@ -16,11 +18,12 @@ import { TeamsModule } from '../teams/teams.module';
       useUnifiedTopology: true,
       synchronize: true,
       logging: true,
-      entities: [Team],
+      entities: [Team, User],
       migrations: [],
       subscribers: [],
     }),
     TeamsModule,
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [AppService],

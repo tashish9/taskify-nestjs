@@ -11,9 +11,4 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
-
-  @Get('/signin')
-  signIn() {
-    return this.appService.signin();
-  }
 }

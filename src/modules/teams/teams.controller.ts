@@ -6,14 +6,13 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { Team } from 'db/team';
 import { TeamsService } from './teams.service';
 import { Request } from 'express';
 import { AuthGuard } from 'src/modules/auth/auth.guard';
+import { Team } from 'src/entities/teams.entity';
 
 @Controller('api/teams')
 @Dependencies(TeamsService)
-// @Dependencies(AuthService)
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 

@@ -1,5 +1,6 @@
 import { Entity, ObjectID, ObjectIdColumn, Column } from 'typeorm';
 import { Task } from './task';
+import { User } from './user.entity';
 
 @Entity('teams')
 export class Team {
@@ -12,8 +13,8 @@ export class Team {
   @Column()
   description!: string;
 
-  @Column()
-  teamMembers: string[];
+  @Column('array', { default: [] })
+  teamMembers: ObjectID[];
 
   @Column('array', { default: [] })
   tasks: Task[] = [];
