@@ -3,9 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Team } from '../entities/teams.entity';
 import { MongoRepository } from 'typeorm';
 import { z, ZodError } from 'zod';
-import { Task } from 'src/entities/task';
+import { Task } from 'src/entities/task.entity';
 import { ObjectID } from 'mongodb';
 import { User } from 'src/entities/user.entity';
+import { TasksService } from './tasks.service';
 
 @Injectable()
 export class TeamsService {
@@ -14,12 +15,14 @@ export class TeamsService {
     private readonly teamsRepository: MongoRepository<Team>,
     @InjectRepository(User)
     private readonly usersRepository: MongoRepository<User>,
+    @InjectRepository(Task)
+    private readonly tasksRepository: MongoRepository<Task>,
+    private readonly tasksService: TasksService,
   ) {}
 
   async findAllTeams(): Promise<Team[]> {
     try {
       const teams = await this.teamsRepository.find();
-
       return this.populateTeams(teams);
     } catch (error: any) {
       if (error instanceof ZodError) {
@@ -34,7 +37,7 @@ export class TeamsService {
       const AddTeamSchema = z.object({
         title: z.string().min(1),
         description: z.string().min(1),
-        teamMembers: z.string().array(),
+        teamMembers: z.string().array().optional(),
       });
 
       AddTeamSchema.parse(data);
@@ -42,9 +45,10 @@ export class TeamsService {
 
       team.title = data.title;
       team.description = data.description;
-      team.teamMembers = data.teamMembers.map((el: string) => {
-        return new ObjectID(el);
-      });
+      team.teamMembers =
+        data.teamMembers?.map((el: string) => {
+          return new ObjectID(el);
+        }) || [];
 
       return this.teamsRepository.save(team);
     } catch (error: any) {
@@ -61,48 +65,21 @@ export class TeamsService {
 
   async addTask(teamId: string, taskData: any): Promise<Team> {
     try {
-      const task = new Task();
-
-      const dateSchema = z.preprocess(
-        (arg) => {
-          console.log(arg);
-
-          if (typeof arg == 'string' || arg instanceof Date)
-            return new Date(arg);
-        },
-        z.date({
-          required_error: 'Please select a date and time',
-          invalid_type_error: "That's not a date!",
-        }),
-      );
-
-      const AddTaskSchema = z.object({
-        assignee: z.string().min(1),
-        description: z.string().min(1),
-        name: z.string().min(1),
-        status: z.string().min(1),
-        dueDate: dateSchema,
-      });
-
-      AddTaskSchema.parse(taskData);
-
-      task.assignee = taskData.assignee;
-      task.description = taskData.description;
-      task.dueDate = taskData.dueDate;
-      task.name = taskData.name;
-      task.status = taskData.status;
+      const createdTask = await this.tasksService.addTask(taskData);
 
       const data = await this.teamsRepository.findOneAndUpdate(
         { _id: new ObjectID(teamId) },
         {
-          $push: { tasks: task },
+          $push: { tasks: createdTask._id },
         },
         {
           returnOriginal: false,
         },
       );
+
       return data.value;
     } catch (error: any) {
+      console.error(error);
       if (error instanceof ZodError) {
         throw new BadRequestException(error.message);
       }
@@ -118,7 +95,6 @@ export class TeamsService {
     }
 
     team.tasks = team.tasks.map((el) => {
-      console.log(el.name, taskData.name);
       if (el.name === taskData.name) {
         return taskData as Task;
       }
@@ -137,13 +113,68 @@ export class TeamsService {
     return data.value;
   }
 
+  async addMember(teamId: string, data: any): Promise<Team> {
+    const AddMemberSchema = z.object({
+      username: z.string().min(1),
+    });
+
+    try {
+      AddMemberSchema.parse(data);
+
+      const user = new User();
+      user.username = data.username;
+
+      const addedUser = await this.usersRepository.save(user);
+
+      const updatedTeam = await this.teamsRepository.findOneAndUpdate(
+        { _id: new ObjectID(teamId) },
+        {
+          $push: { teamMembers: new ObjectID(addedUser._id) },
+        },
+        {
+          returnOriginal: false,
+        },
+      );
+
+      return updatedTeam.value;
+    } catch (error: any) {
+      if (error instanceof ZodError) {
+        throw new BadRequestException(error.message);
+      }
+      throw error;
+    }
+  }
+
+  async getMemberTasks(teamId: string, userId: string): Promise<Task[]> {
+    const teamData = await this.teamsRepository.findOneBy(teamId);
+
+    const populatedTeamArray = await this.populateTeams([teamData]);
+    const team = populatedTeamArray[0];
+
+    team.tasks = await this.tasksService.populateTasks(
+      team.tasks as ObjectID[],
+    );
+
+    return (team.tasks as Task[]).filter((task) => {
+      if (!task.assignee) return false;
+      return (task.assignee as User)._id.toString() === userId;
+    });
+  }
+
   async populateTeams(teams: Team[]): Promise<Team[]> {
     const users = await this.usersRepository.find();
+    const tasks = await this.tasksRepository.find();
 
     teams.forEach((el) => {
       el.teamMembers = el.teamMembers.map((userId) => {
         return users.find((user) => {
           return userId.toString() === user._id.toString();
+        });
+      });
+
+      el.tasks = el.tasks.map((taskId) => {
+        return tasks.find((task) => {
+          return taskId.toString() === task._id.toString();
         });
       });
     });

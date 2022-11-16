@@ -2,6 +2,7 @@ import {
   Controller,
   Dependencies,
   Get,
+  Put,
   Post,
   Req,
   UseGuards,
@@ -10,6 +11,7 @@ import { TeamsService } from '../services/teams.service';
 import { Request } from 'express';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { Team } from 'src/entities/teams.entity';
+import { Task } from 'src/entities/task.entity';
 
 @Controller('api/teams')
 @Dependencies(TeamsService)
@@ -38,8 +40,18 @@ export class TeamsController {
     return this.teamsService.addTask(req.params.id, req.body);
   }
 
-  @Post('/:id/update-task')
+  @Put('/:id/update-task')
   async updateTask(@Req() req: Request): Promise<Team> {
     return this.teamsService.updateTask(req.params.id, req.body.taskData);
+  }
+
+  @Post('/:id/add-member')
+  async addMember(@Req() req: Request): Promise<Team> {
+    return this.teamsService.addMember(req.params.id, req.body);
+  }
+
+  @Get('/:id/users/:userId/tasks')
+  getMemberTasks(@Req() req: Request): Promise<Task[]> {
+    return this.teamsService.getMemberTasks(req.params.id, req.params.userId);
   }
 }

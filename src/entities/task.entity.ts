@@ -1,4 +1,5 @@
-import { Column } from 'typeorm';
+import { Column, Entity, ObjectID, ObjectIdColumn } from 'typeorm';
+import { User } from './user.entity';
 
 export enum TaskStatus {
   ASSIGNED = 'Assigned',
@@ -7,7 +8,11 @@ export enum TaskStatus {
   COMPLETED = 'Completed',
 }
 
+@Entity('tasks')
 export class Task {
+  @ObjectIdColumn()
+  _id: ObjectID;
+
   @Column()
   name: string;
 
@@ -21,7 +26,7 @@ export class Task {
   dueDate: Date;
 
   @Column()
-  assignee: string;
+  assignee: ObjectID | User;
 
   @Column({
     type: 'enum',
